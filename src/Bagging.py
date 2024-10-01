@@ -71,8 +71,8 @@ class Bagging():
 
     parameters = {
       'n_estimators': [10, 30, 50, 100, 150, 200],
-      'max_features': [0.5, 1.0, 3.0, 5.0, 7.0, 10],
-      'max_samples': [0.5, 1.0, 3.0, 5.0, 7.0, 10],
+      # 'max_features': [0.5, 1.0, 3.0, 5.0, 7.0, 10],
+      # 'max_samples': [0.5, 1.0, 3.0, 5.0, 7.0, 10],
       'bootstrap': [True, False],  # New parameter
       'bootstrap_features': [True, False]  # New parameter
     }

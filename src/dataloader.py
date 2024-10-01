@@ -71,7 +71,7 @@ class dataLoader():
     i = 0
     for filename in os.listdir(self.src_path):
       df = pd.read_csv(self.src_path+filename)
-      print(f'{self.src_path}{filename}')
+      print(f'data path here {self.src_path}{filename}')
       mn = df.mean(skipna=True)
       df = df.fillna(mn)
       #df = df.dropna()
@@ -87,6 +87,7 @@ class dataLoader():
     j = 0
     for filename in os.listdir(self.tar_path):
       df = pd.read_csv(self.tar_path+filename)
+      print(f'src data shape here at first {self.src_data.shape} from file {self.tar_path+filename}')
       print(f'data path here:{self.tar_path}/{filename}')
       mn = df.mean(skipna=True)
       df = df.fillna(mn)
@@ -146,6 +147,7 @@ class dataLoader():
     ##apply one hot encoding to other string columns on source
     print(f"src string columns {stringColumns}")
     print(self.src_data)
+    print("===========")
     cls = []
     for sc in stringColumns:
       cls = cls + list(self.src_data[sc].unique())
@@ -155,9 +157,12 @@ class dataLoader():
     oe_style = OneHotEncoder()
     oe_results = oe_style.fit_transform(self.src_data[stringColumns])
     oe = pd.DataFrame(oe_results.toarray(), columns=cls)
+    print(f'oe shape here {oe}')
     self.src_data = self.src_data.drop(stringColumns, axis=1)
+    print('The shape of data is {self.src_data}')
     self.src_data = pd.concat([self.src_data, oe], axis=1)
     #self.src_data = pd.get_dummies(self.src_data, columns = stringColumns, drop_first=False)
+    print(f'src data shape here {self.src_data.shape}')
 
     #Columns to be omitted
     omitColumns = []
