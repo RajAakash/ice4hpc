@@ -85,13 +85,15 @@ if __name__ == "__main__":
   #src_x, src_y, tar_x, tar_y = loader.src_tx, loader.src_y, loader.tar_tx, loader.tar_y
   qrrploader = dataLoader(os.getcwd()+global_config["src_path1"] ,os.getcwd()+global_config["tar_path1"])
   qrrploader.loadData()
-  qrrp_src_x, qrrp_src_y, qrrp_tar_x, qrrp_tar_y = qrrploader.getXY("", "",["rp"])
+  qrrp_src_x, qrrp_src_y, qrrp_tar_x, qrrp_tar_y = qrrploader.getXY("", "",["31"])
   print("Source X Data:")
   print(qrrp_src_x)
+  print(f'Shape here is {qrrp_src_x.shape}')
 
   # Print source Y data
   print("\nSource Y Data:")
   print(qrrp_src_y)
+  print(f"Shape of y here is {qrrp_src_y.shape}")
 
   # Print target X data
   print("\nTarget X Data:")
@@ -102,7 +104,7 @@ if __name__ == "__main__":
   print(qrrp_tar_y)
   
   qrrp_p = preprocessor(qrrp_src_x, qrrp_src_y, qrrp_tar_x, qrrp_tar_y, 0)
-  qrrp_p.setTargetColumn(["rp"])
+  qrrp_p.setTargetColumn(["31"])
   qrrp_src_tx, qrrp_src_ty = qrrploader.getSrcXY()
   qrrp_p.setSrcDFXY(qrrp_src_tx, qrrp_src_ty)
   qrrp_tar_tx, qrrp_tar_ty = qrrploader.getTarXY()
@@ -115,10 +117,10 @@ if __name__ == "__main__":
 
   rcrploader = dataLoader(os.getcwd()+global_config["src_path2"],os.getcwd()+global_config["tar_path2"] )#("LDRD/Case-1-new_labels_2/q-c/Train/","LDRD/Case-1-new_labels_2/q-c/Test/")
   rcrploader.loadData()
-  rcrp_src_x, rcrp_src_y, rcrp_tar_x, rcrp_tar_y = rcrploader.getXY("", "",["rp"])
+  rcrp_src_x, rcrp_src_y, rcrp_tar_x, rcrp_tar_y = rcrploader.getXY("", "",["31"])
   rcrp_tar_x = np.reshape(rcrp_tar_x, (rcrp_tar_x.shape[0], rcrp_tar_x.shape[1]))
   rcrp_p = preprocessor(rcrp_src_x, rcrp_src_y, rcrp_tar_x, rcrp_tar_y, 0)
-  rcrp_p.setTargetColumn(["rp"])
+  rcrp_p.setTargetColumn(["31"])
   rcrp_src_tx, rcrp_src_ty = rcrploader.getSrcXY()
   rcrp_p.setSrcDFXY(rcrp_src_tx, rcrp_src_ty)
   rcrp_tar_tx, rcrp_tar_ty = rcrploader.getTarXY()

@@ -65,6 +65,10 @@ class AdaBoost():
     B_X_train = B_combined_imputed[:B_X_train.shape[0], :]
     B_tar_x_scaled = B_combined_imputed[B_X_train.shape[0]:, :]
 
+
+    print("Adaboost A_X_train shape:", A_X_train.shape)
+    print("Adaboost B_X_train shape:", B_X_train.shape)
+
     parameters = { 'n_estimators': [10,30, 50],
                'loss': ["linear","square"],
                'learning_rate': [0.01, 0.05, 0.1]

@@ -29,6 +29,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.impute import SimpleImputer
+
 class DecisionTree():
   def __init__(self, num_of_estimators):
     self.num_of_estimators = int(num_of_estimators)
@@ -39,6 +41,23 @@ class DecisionTree():
     indices_path = os.getcwd()+global_config["indices_path"]
     #callback2 = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=40)
     folder_name = "RF"
+    imputer_A = SimpleImputer(missing_values=np.nan,strategy='mean')
+    A_X_train = imputer_A.fit_transform(A_X_train)
+    A_tar_x_scaled = imputer_A.transform(A_tar_x_scaled)
+
+    B_X_train_df = pd.DataFrame(B_X_train)
+    B_tar_x_scaled_df = pd.DataFrame(B_tar_x_scaled)
+    B_X_train_df, B_tar_x_scaled_df = B_X_train_df.align(B_tar_x_scaled_df, join='outer', axis=1)
+    B_X_train_df = B_X_train_df.fillna(np.nan)
+    B_tar_x_scaled_df = B_tar_x_scaled_df.fillna(np.nan)
+
+    B_X_train = B_X_train_df.values
+    B_tar_x_scaled = B_tar_x_scaled_df.values
+    B_combined = np.vstack((B_X_train, B_tar_x_scaled))
+    imputer_B = SimpleImputer(missing_values=np.nan,strategy='mean')
+    B_combined_imputed = imputer_B.fit_transform(B_combined)
+    B_X_train = B_combined_imputed[:B_X_train.shape[0], :]
+    B_tar_x_scaled = B_combined_imputed[B_X_train.shape[0]:, :]
     #tar_x_train, tar_x_test, tar_y_train, tar_y_test = processor.get_train_test_target(test_size = 0.9, rand_state=i*50)
     """
     """
