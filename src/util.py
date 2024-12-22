@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import random
 from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.layers import Activation, Dropout, Flatten, Input, Dense, concatenate
+from tensorflow.keras.layers import Activation, Dropout, Flatten, Input, Dense, concatenate,TimeDistributed
 from sklearn.metrics import accuracy_score, precision_score, recall_score, r2_score, mean_squared_error
 from tensorflow.keras.models import Model, Sequential, load_model
 from sklearn.model_selection import train_test_split
@@ -56,8 +56,8 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import random
 from sklearn.ensemble import RandomForestRegressor
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.layers import Activation, Dropout, Flatten, Input, Dense, concatenate
+from tensorflow.keras.layers import BatchNormalization,Input, Dense, LayerNormalization, MultiHeadAttention, Add, Dropout, GlobalAveragePooling1D,Lambda
+from tensorflow.keras.layers import Activation, Dropout, Flatten, Input, Dense, concatenate ,LeakyReLU
 from sklearn.metrics import accuracy_score, precision_score, recall_score, r2_score, mean_squared_error, mean_absolute_percentage_error
 from tensorflow.keras.models import Model, Sequential, load_model, model_from_json
 from sklearn.model_selection import train_test_split
@@ -198,30 +198,138 @@ def dataGen(generator, src_columns, tar_columns, target_data):
     target_data = pd.concat([target_data, list_of_dfs[i]], axis=1)
     i = i + 1
   return target_data
+# def create_model4(
+#                  neurons_input = 1, num_of_layers_1=1,
+#                   lr=0.01, moment = 0.5, actF="relu", lossF="mean_squared_error", transfer=False, frozen_layers = 0, num_of_outputs = 1):
+
+#   model = Sequential()
+#   for i in range(num_of_layers_1):
+#     layer = Dense(units=neurons_input, activation=actF)
+#     layer2 = BatchNormalization(momentum=moment)
+#     # if transfer == True and i< frozen_layers:
+#     #   #(num_of_layers_1-1):
+#     #   layer.trainable=False
+#     #   layer2.trainable=False
+#     model.add(layer)
+#     model.add(layer2)
+#     #model.add(Dropout(0.4))
+#   finalLayer = Dense(units=num_of_outputs)
+#   #finalLayer.trainable=False
+#   model.add(finalLayer)
+#   #, kernel_regularizer=tf.keras.regularizers.l1(0.01),
+#   #                            activity_regularizer=tf.keras.regularizers.l2(0.01)))
+#   opt1 = tf.keras.optimizers.Nadam(learning_rate=lr)
+#   model.compile(loss=lossF, optimizer=opt1, metrics=['mse','mae','mape'])
+#   return model
+
 def create_model4(
-                 neurons_input = 1, num_of_layers_1=1,
-                  lr=0.01, moment = 0.5, actF="relu", lossF="mean_squared_error", transfer=False, frozen_layers = 0, num_of_outputs = 1):
+                 neurons_input=1, num_of_layers_1=1,
+                 lr=0.01, moment=0.5, actF="relu", lossF="mean_squared_error", 
+                 transfer=False, frozen_layers=0, num_of_outputs=1):
+
+    model = Sequential()
+    # Add hidden layers
+    for i in range(num_of_layers_1):
+        layer = Dense(units=neurons_input, activation=actF)  # Hidden layer with specified activation
+        layer2 = BatchNormalization(momentum=moment)  # Batch normalization layer
+        if transfer and i < frozen_layers:  # Apply transfer learning logic
+            layer.trainable = False
+            layer2.trainable = False
+        model.add(layer)
+        model.add(layer2)
+    
+    # Add final layer for regression (no activation or linear activation)
+    finalLayer = Dense(units=num_of_outputs)
+    model.add(finalLayer)
+    
+    # Compile the model
+    opt1 = tf.keras.optimizers.Nadam(learning_rate=lr)
+    model.compile(loss=lossF, optimizer=opt1, metrics=['mse', 'mae', 'mape'])
+    
+    return model
+
+def create_Classifier(
+    neurons_input=1, num_of_layers_1=1,
+    lr=0.001, moment=0.5, actF="relu", 
+    lossF="categorical_crossentropy", 
+    transfer=False, frozen_layers=0, 
+    num_of_outputs=1):
 
   model = Sequential()
-  for i in range(num_of_layers_1):
+
+  # Set the input shape in the first layer - adjust according to your data shape
+  # If your data has 3 features:
+  model.add(Dense(units=neurons_input, activation=actF))  # Adjust to 3 features if needed
+  
+  for i in range(1, num_of_layers_1):  # Start from 1 as first layer is already added
     layer = Dense(units=neurons_input, activation=actF)
-    layer2 = BatchNormalization(momentum=moment)
-    if transfer == True and i< frozen_layers:
-      #(num_of_layers_1-1):
-      layer.trainable=False
-      layer2.trainable=False
     model.add(layer)
-    model.add(layer2)
-    #model.add(Dropout(0.4))
-  finalLayer = Dense(units=num_of_outputs)
-  #finalLayer.trainable=False
+    
+    if transfer and i < frozen_layers:
+      layer.trainable = False
+
+  # Final layer with sigmoid activation
+  finalLayer = Dense(units=num_of_outputs, activation='softmax')
   model.add(finalLayer)
-  #, kernel_regularizer=tf.keras.regularizers.l1(0.01),
-  #                            activity_regularizer=tf.keras.regularizers.l2(0.01)))
+
+  # Optimizer and compilation
+  # opt1 = tf.keras.optimizers.Nadam(learning_rate=lr, initial_accumulator_value=0.1, epsilon=1e-7)
   opt1 = tf.keras.optimizers.Nadam(learning_rate=lr)
-  model.compile(loss=lossF, optimizer=opt1, metrics=['mse','mae','mape'])
+  model.compile(loss=lossF, optimizer=opt1, metrics=['accuracy'])
+  
   return model
 
+def create_Attention_Classifier(
+    neurons_input=179,  # Number of features
+    num_of_layers_1=1,
+    lr=0.01, 
+    moment=0.5, 
+    actF="sigmoid", 
+    lossF="categorical_crossentropy", 
+    transfer=False, 
+    frozen_layers=0, 
+    num_of_outputs=10  # Updated to 10 classes
+):
+    # Define the input layer for a single time step and 179 features
+    inputs = Input(shape=(1, 100))  # Input shape: (None, 1, 179)
+    print("Initial input shape:", inputs.shape)  # Debugging
+
+    # Apply TimeDistributed Dense layer to reduce the feature dimension from 179 to 100
+    x = Dense(100)(inputs)  # Now, `x` should have shape (None, 1, 100)
+    print("Shape after TimeDistributed Dense projection to 100:", x.shape)  # Debugging
+
+    # Add MultiHeadAttention layers
+    for i in range(num_of_layers_1):
+        attention_layer = MultiHeadAttention(num_heads=2, key_dim=100)
+        attention_output = attention_layer(x, x)
+        print("Shape after MultiHeadAttention:", attention_output.shape)  # Debugging
+
+        # Residual connection and Layer Normalization
+        x = LayerNormalization()(attention_output + x)
+        print("Shape after LayerNormalization:", x.shape)  # Debugging
+
+        # Apply activation function
+        x = Activation(actF)(x) if actF else x
+        print("Shape after activation:", x.shape)  # Debugging
+
+        # Set layer as non-trainable if needed
+        if transfer and i < frozen_layers:
+            attention_layer.trainable = False
+
+    # Apply GlobalAveragePooling1D to reduce sequence dimension
+    x = GlobalAveragePooling1D()(x)
+    print("Shape after GlobalAveragePooling1D:", x.shape)  # Debugging
+
+    # Final Dense layer for output with 10 classes
+    outputs = Dense(units=num_of_outputs, activation="softmax")(x)
+    print("Final output shape:", outputs.shape)  # Debugging
+
+    # Create and compile model
+    model = Model(inputs=inputs, outputs=outputs)
+    optimizer = tf.keras.optimizers.Nadam(learning_rate=lr)
+    model.compile(optimizer=optimizer, loss=lossF, metrics=['accuracy'])
+
+    return model
 class EarlyStoppingAtMinLoss(tf.keras.callbacks.Callback):
   """Stop training when the loss is at its min, i.e. the loss stops decreasing.
 
@@ -242,7 +350,7 @@ class EarlyStoppingAtMinLoss(tf.keras.callbacks.Callback):
     # The epoch the training stops at.
     self.stopped_epoch = 0
     # Initialize the best as infinity.
-    self.best = np.Inf
+    self.best = np.inf
 
   def on_epoch_end(self, epoch, logs=None):
     current = logs.get(self.targeted_loss)
@@ -371,6 +479,7 @@ def n_sampleMaker(tar_x_scaled, tar_y_scaled, path, n):
 
 
 def sampleLoader(tar_x_scaled, tar_y_scaled, path, n):
+  print(f'Here is where I load the sample{tar_x_scaled},{tar_y_scaled}')
   dropIndices = []
   x2 =[]
   lb2 = []
@@ -569,7 +678,9 @@ def sorceModelLoader(source_features, source_labels, transfer_permission, num_of
     batch_size = None
   #model.fit(source_features, source_labels, batch_size = int(nums[3]) , epochs=1000, callbacks=[ callback2], validation_split=0.2, shuffle= True)
   if build_now:
-    loaded_model = create_model4(neurons_input = int(nums[0]) , num_of_layers_1= int(nums[1]), lr= float(nums[2]) , moment = float(nums[4]) , actF="relu", lossF="mean_squared_error", transfer=transfer_permission, frozen_layers= num_of_frozen_layers, num_of_outputs = output_n)
+    # source_features_processed = np.zeros_like(source_features[:, :, :100])
+    
+    loaded_model = create_model4(neurons_input = int(nums[0]) , num_of_layers_1= int(nums[1]), lr= float(nums[2]) , moment = float(nums[4]) , actF="sigmoid", lossF="categorical_crossentropy", transfer=transfer_permission, frozen_layers= num_of_frozen_layers, num_of_outputs =output_n)
     if len(source_features)<10:
       print("Building model based on training loss")
       callback2 = EarlyStoppingAtMinLoss(patience = 40, arg_loss="loss") #
@@ -577,6 +688,9 @@ def sorceModelLoader(source_features, source_labels, transfer_permission, num_of
     else:
       print("Building model based on validation loss")
       callback2 = EarlyStoppingAtMinLoss(patience=40, arg_loss="val_loss")
+      # source_features = source_features.reshape(-1, 1, 179)
+      # source_features = source_features.reshape(-1, 30) 
+      print(f'here is source_features shape {source_features.shape} ,{source_labels.shape}')
       loaded_model.fit(source_features, source_labels, batch_size = batch_size, epochs=1000, callbacks=[ callback2], validation_split=0.2, shuffle= True )
     #loaded_model.fit(source_features, source_labels, batch_size = batch_size , epochs=1000, callbacks=[ callback2]) #, validation_split=0.2, shuffle= True)
     #model.save_weights(source_model_weights)
@@ -606,7 +720,7 @@ def sorceModelLoader(source_features, source_labels, transfer_permission, num_of
         loaded_model.layers[i].trainable=False
         i += 2
   opt1 = tf.keras.optimizers.Nadam(learning_rate=float(nums[2]))
-  loaded_model.compile(loss='mean_squared_error', optimizer= opt1, metrics=['mse'])
+  loaded_model.compile(loss='categorical_crossentropy', optimizer= opt1, metrics=['accuracy'])
   print("Model Building Done")
   return loaded_model
 
@@ -614,57 +728,57 @@ def sorceModelLoader(source_features, source_labels, transfer_permission, num_of
 
 
 
-def sourceModelLoader(source_features, source_labels, transfer_permission, num_of_frozen_layers, build_now, global_config, target_app, save_bit, output_n=1):
-  f = open(os.getcwd()+global_config['source_model_params'], "r")
-  nums = f.readlines()
-  nums = nums[0].split(" ")
-  f.close()
-  callback2 =  tf.keras.callbacks.EarlyStopping(monitor='loss', patience=40)
-  batch_size = int(nums[3])
-  if batch_size> len(source_features):
-    batch_size = None
-  #model.fit(source_features, source_labels, batch_size = int(nums[3]) , epochs=1000, callbacks=[ callback2], validation_split=0.2, shuffle= True)
-  if build_now:
-    loaded_model = create_model4(neurons_input = int(nums[0]) , num_of_layers_1= int(nums[1]), lr= float(nums[2]) , moment = float(nums[4]) , actF="relu", lossF="mean_squared_error", transfer=transfer_permission, frozen_layers= num_of_frozen_layers, num_of_outputs = output_n)
-    if len(source_features)<10:
-      print("Building model based on training loss")
-      callback2 = EarlyStoppingAtMinLoss(patience = 40, arg_loss="loss") #
-      loaded_model.fit(source_features, source_labels, batch_size = batch_size, epochs=1000, callbacks=[ callback2])
-    else:
-      print("Building model based on validation loss")
-      callback2 = EarlyStoppingAtMinLoss(patience=40, arg_loss="val_loss")
-      loaded_model.fit(source_features, source_labels, batch_size = batch_size, epochs=1000, callbacks=[ callback2], validation_split=0.2, shuffle= True )
-    #loaded_model.fit(source_features, source_labels, batch_size = batch_size , epochs=1000, callbacks=[ callback2]) #, validation_split=0.2, shuffle= True)
-    #model.save_weights(source_model_weights)
-    if save_bit:
-      os.makedirs(os.path.dirname(os.getcwd()+global_config['source_model']), exist_ok=True)
-      model_json = loaded_model.to_json()
-      with open(os.getcwd()+global_config['source_model'], "w") as json_file:
-        json_file.write(model_json)
-      # serialize weights to HDF5
-      loaded_model.save_weights(os.getcwd()+global_config['source_model_weights'])
-      print("Saved model to disk")
-      json_file.close()
-  else:
-    #model.load_weights(source_model_weights)
-    json_file = open(os.getcwd()+global_config['source_model'], 'r')
-    loaded_model_json = json_file.read()
+# def sourceModelLoader(source_features, source_labels, transfer_permission, num_of_frozen_layers, build_now, global_config, target_app, save_bit, output_n=1):
+#   f = open(os.getcwd()+global_config['source_model_params'], "r")
+#   nums = f.readlines()
+#   nums = nums[0].split(" ")
+#   f.close()
+#   callback2 =  tf.keras.callbacks.EarlyStopping(monitor='loss', patience=40)
+#   batch_size = int(nums[3])
+#   if batch_size> len(source_features):
+#     batch_size = None
+#   #model.fit(source_features, source_labels, batch_size = int(nums[3]) , epochs=1000, callbacks=[ callback2], validation_split=0.2, shuffle= True)
+#   if build_now:
+#     loaded_model = create_model4(neurons_input = int(nums[0]) , num_of_layers_1= int(nums[1]), lr= float(nums[2]) , moment = float(nums[4]) , actF="relu", lossF="mean_squared_error", transfer=transfer_permission, frozen_layers= num_of_frozen_layers, num_of_outputs = output_n)
+#     if len(source_features)<10:
+#       print("Building model based on training loss")
+#       callback2 = EarlyStoppingAtMinLoss(patience = 40, arg_loss="loss") #
+#       loaded_model.fit(source_features, source_labels, batch_size = batch_size, epochs=1000, callbacks=[ callback2])
+#     else:
+#       print("Building model based on validation loss")
+#       callback2 = EarlyStoppingAtMinLoss(patience=40, arg_loss="val_loss")
+#       loaded_model.fit(source_features, source_labels, batch_size = batch_size, epochs=1000, callbacks=[ callback2], validation_split=0.2, shuffle= True )
+#     #loaded_model.fit(source_features, source_labels, batch_size = batch_size , epochs=1000, callbacks=[ callback2]) #, validation_split=0.2, shuffle= True)
+#     #model.save_weights(source_model_weights)
+#     if save_bit:
+#       os.makedirs(os.path.dirname(os.getcwd()+global_config['source_model']), exist_ok=True)
+#       model_json = loaded_model.to_json()
+#       with open(os.getcwd()+global_config['source_model'], "w") as json_file:
+#         json_file.write(model_json)
+#       # serialize weights to HDF5
+#       loaded_model.save_weights(os.getcwd()+global_config['source_model_weights'])
+#       print("Saved model to disk")
+#       json_file.close()
+#   else:
+#     #model.load_weights(source_model_weights)
+#     json_file = open(os.getcwd()+global_config['source_model'], 'r')
+#     loaded_model_json = json_file.read()
 
-    json_file.close()
-    loaded_model = model_from_json(loaded_model_json)
-    # load weights into new model
-    loaded_model.load_weights(os.getcwd()+global_config['source_model_weights'])
-    print("Loaded model from disk")
-    i = 0
-    if transfer_permission == True:
-      while i< (2*num_of_frozen_layers):
-        loaded_model.layers[i].trainable=False
-        loaded_model.layers[i].trainable=False
-        i += 2
-  opt1 = tf.keras.optimizers.Nadam(learning_rate=float(nums[2]))
-  loaded_model.compile(loss='mean_squared_error', optimizer= opt1, metrics=['mse'])
-  print("Model Building Done")
-  return loaded_model
+#     json_file.close()
+#     loaded_model = model_from_json(loaded_model_json)
+#     # load weights into new model
+#     loaded_model.load_weights(os.getcwd()+global_config['source_model_weights'])
+#     print("Loaded model from disk")
+#     i = 0
+#     if transfer_permission == True:
+#       while i< (2*num_of_frozen_layers):
+#         loaded_model.layers[i].trainable=False
+#         loaded_model.layers[i].trainable=False
+#         i += 2
+#   opt1 = tf.keras.optimizers.Nadam(learning_rate=float(nums[2]))
+#   loaded_model.compile(loss='mean_squared_error', optimizer= opt1, metrics=['mse'])
+#   print("Model Building Done")
+#   return loaded_model
 def deltaUQSourceLoader(source_features, source_labels, transfer_permission, num_of_frozen_layers, build_now, global_config, target_app, save_bit, anchors, n_anchors, output_n=1):
   f = open(os.getcwd()+global_config['source_model_params'], "r")
   nums = f.readlines()
@@ -842,6 +956,7 @@ def yaml_key_adder(config, key, value):
   with open(config, "a") as f:
     f.write(yml_config)
   f.close()
+
 def scatterPlot(ground_truth, predictions, saving_path, title):
   os.makedirs(os.path.dirname(saving_path), exist_ok=True)
   matplotlib.rcParams['mathtext.fontset'] = 'stix'
@@ -851,7 +966,7 @@ def scatterPlot(ground_truth, predictions, saving_path, title):
   mse,r2 = mean_squared_error(ground_truth#.reshape(-1,1)
                 , predictions), r2_score(ground_truth#.reshape(-1,1)
                                 , predictions)
-  plt.xlim([0, 1]) 
+  # plt.xlim([0, 1]) 
   #plt.ylim([-5, 20]) 
   plt.xlabel('Actual Labels', fontsize=32)
   plt.ylabel('Predicted Labels', fontsize=32)
@@ -860,7 +975,6 @@ def scatterPlot(ground_truth, predictions, saving_path, title):
   plt.title(f'MSE: {mse}, R2: {r2}-{title}')
   plt.savefig(saving_path)
 
-
 def dataToCsv(data, csv_filename):
   os.makedirs(os.path.dirname(csv_filename), exist_ok=True)
   fileI = open(csv_filename, "w")
@@ -868,6 +982,7 @@ def dataToCsv(data, csv_filename):
   for a in data:
     writerI.writerow(a)
   fileI.close()
+
 def newscatterPlot(ground_truth, predictions, saving_path, ground_truth_filename, predictions_filename, title):
   os.makedirs(os.path.dirname(saving_path), exist_ok=True)
   os.makedirs(os.path.dirname(ground_truth_filename), exist_ok=True)

@@ -95,6 +95,7 @@ class Transformator(tf.keras.Model):
       #,kernel_initializer=initializer
     )
   def call(self, input_features):
+    print(f"Here os {input_features}")
     encoded = self.hidden_layer(input_features)
     for i in range(self.nL):
       encoded=self.array[i](encoded)
@@ -135,6 +136,7 @@ def transformerLoss(input_translator, source_transformer, original_target, origi
 def train( transformator, predictor, opt, original, original_labels):
   with tf.GradientTape() as tape, tf.GradientTape() as disc_tape:
     tape.watch(transformator.trainable_variables)
+    print(f"here so {transformator}, {predictor} ,{original} ,{original_labels}")
     ls = loss(transformator, predictor, original, original_labels)
     #ls = tf.cast(ls, tf.float64)
     #ls = tf.convert_to_tensor(ls, dtype=tf.float32)
@@ -172,6 +174,11 @@ def kfoldValidation(transformatorP, predictorP, optP, X, Y, fold):
     #for i in range(epochS):
     #transformatorP = train(transformatorP, predictorP, optP, rowx, rowy)
     with tf.GradientTape() as tape, tf.GradientTape() as disc_tape:
+      # trainable_vars = [
+      #   tf.convert_to_tensor(var) if isinstance(var, keras.backend.KerasVariable) else var
+      #   for var in transformatorP.trainable_variables
+      # ]
+      # tape.watch(trainable_vars)
       tape.watch(transformatorP.trainable_variables)
       ls = loss(transformatorP, predictorP, rowx, rowy)
       #ls = tf.cast(ls, tf.float64)

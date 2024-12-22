@@ -106,12 +106,11 @@ class Bagging():
     model = grid.fit(B_X_train, B_Y_train)
     print(model.best_params_,'\n')
     print(model.best_estimator_,'\n')
-
-
-
+    """"
     rc_source_model = BaggingRegressor(**params)
-    rc_source_model.fit(B_X_train, B_Y_train)
-    yhat4 = rc_source_model.predict(B_tar_x_scaled)
+    rc_source_model.fit(B_X_train, B_Y_train)"""
+    yhat4 = rp_source_model.predict(B_tar_x_scaled)
     mse5 = mean_squared_error(B_tar_y_scaled, yhat4)
     mape5 = mean_absolute_percentage_error(B_tar_y_scaled, yhat4)
+    print(f"Here are the mape values of bagging {mape3},{mape5}")
     return mse3, mape3, mse5, mape5

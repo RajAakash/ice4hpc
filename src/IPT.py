@@ -25,6 +25,7 @@ import ensemRegressor
 import optunatransformator1
 import util
 import re
+from sklearn.preprocessing import OneHotEncoder    
 class IPT():
   def __init__(self, transfer_technique):
     self.transfer_technique = transfer_technique
@@ -75,9 +76,9 @@ class IPT():
           print("before the sample loader")
           x2, lb2, tar_x_scaled, tar_y_scaled = util.sampleLoader(tar_x_scaled, tar_y_scaled,f"{indices_path}/{target_app}-q-r-indices-{rank}-{fname}.csv" ,j)
           print(f"The indices path is {indices_path}/{target_app}-indices-{rank}-{fname}.csv")
-          print("After the sample loader")
+          print(f"After the sample loader {x2},{lb2}")
 
-          source_model = util.sorceModelLoader( A_X_train, A_Y_train, False, nu_of_frozen_layers, False, global_config, target_app, False,os.getcwd()+global_config["source_model1"], os.getcwd()+global_config["source_model_weights1"])
+          source_model = util.sorceModelLoader( A_X_train, A_Y_train, False, nu_of_frozen_layers, True, global_config, target_app, False,os.getcwd()+global_config["source_model1"], os.getcwd()+global_config["source_model_weights1"])
           predictions = source_model.predict(tar_x_test)
           mse0 = mean_squared_error(tar_y_test, predictions)
           ground_truth = preprocessor1.transform(tar_y_test)

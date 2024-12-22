@@ -85,7 +85,7 @@ class AdaBoost():
     yhat2 = rp_source_model.predict(A_tar_x_scaled)
     mse3 = mean_squared_error(A_tar_y_scaled, yhat2)
     mape3 = mean_absolute_percentage_error(A_tar_y_scaled, yhat2)
-    print(mse3)
+    print(f'mse:{mse3}')
     print(mape3)
     parameters = { 'n_estimators': [10, 30, 50],
                'loss': ["linear","square"],
@@ -95,12 +95,11 @@ class AdaBoost():
     model = grid.fit(B_X_train, B_Y_train)
     print(model.best_params_,'\n')
     print(model.best_estimator_,'\n')
-
-
-
+    """
     rc_source_model = AdaBoostRegressor(**params)
-    rc_source_model.fit(B_X_train, B_Y_train)
-    yhat4 = rc_source_model.predict(B_tar_x_scaled)
+    rc_source_model.fit(B_X_train, B_Y_train)"""
+    yhat4 = rp_source_model.predict(B_tar_x_scaled)
     mse5 = mean_squared_error(B_tar_y_scaled, yhat4)
     mape5 = mean_absolute_percentage_error(B_tar_y_scaled, yhat4)
-    return mse3, mape3, mse5, mape5
+    print(f"mape values are {mape3},{mape5}")
+    return mse3, mape3,mse5, mape5
