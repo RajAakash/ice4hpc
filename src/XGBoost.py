@@ -68,9 +68,10 @@ class XGBoost():
               'criterion' : ['friedman_mse','squared_error'],
               'max_features' : ['log2','sqrt',None],
               'n_estimators': [10, 30, 50],
-              'max_depth': [3,5, 10, 15],
-              'min_samples_split': [1,2, 5]
+              'max_depth': [5, 10, 15],
+              'min_samples_split': [2, 5]
              }
+    
     grid = GridSearchCV(GradientBoostingRegressor(),parameters)
     model = grid.fit(A_X_train, A_Y_train)
     print(model.best_params_,'\n')
@@ -85,8 +86,7 @@ class XGBoost():
     mape3 = mean_absolute_percentage_error(A_tar_y_scaled, yhat2)
     print(mse3)
     print(mape3)
-    
-
+    """
     parameters = { 'loss' : ['squared_error','huber'],
               'learning_rate' : [0.01, 0.05],
               'criterion' : ['friedman_mse','squared_error'],
@@ -104,8 +104,9 @@ class XGBoost():
 
 
     rc_source_model = GradientBoostingRegressor(**params)
-    rc_source_model.fit(B_X_train, B_Y_train)
-    yhat4 = rc_source_model.predict(B_tar_x_scaled)
+    rc_source_model.fit(B_X_train, B_Y_train)"""
+    yhat4 = rp_source_model.predict(B_tar_x_scaled)
     mse5 = mean_squared_error(B_tar_y_scaled, yhat4)
     mape5 = mean_absolute_percentage_error(B_tar_y_scaled, yhat4)
+    print(f"Here is the mape values of XGB{mape3}, {mape5}")
     return mse3, mape3, mse5, mape5

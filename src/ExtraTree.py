@@ -103,5 +103,6 @@ class ExtraTree():
     yhat4 = rc_source_model.predict(B_tar_x_scaled)
     mse5 = mean_squared_error(B_tar_y_scaled, yhat4)
     mape5 = mean_absolute_percentage_error(B_tar_y_scaled, yhat4)
+    print(f"Here are the mape values of Extratree {mape3},{mape5}")
     return mse3, mape3, mse5, mape5
 
